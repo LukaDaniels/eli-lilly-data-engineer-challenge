@@ -61,7 +61,7 @@ top_scorers_output = [] #
 for tournament in goalscorers['tournament'].unique(): # loop through each tournament
     tdf = goalscorers[goalscorers['tournament'] == tournament] # keeps rows of goalscorers only for the current tournament
     total_goals = len(tdf)
-    scorer_counts = tdf['player'].value_counts() # counts each players nomb of goals 
+    scorer_counts = tdf['scorer'].value_counts() # counts each players nomb of goals 
     top_scorer = scorer_counts.idxmax() # returns name of highest value
     top_goals = scorer_counts.max() 
     percentage = (top_goals / total_goals) * 100 # returns percantage of total goals
