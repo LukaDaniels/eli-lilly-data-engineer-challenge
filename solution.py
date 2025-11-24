@@ -32,8 +32,7 @@ print(shootout_wins)
 
 def create_key(df):
     return (
-        df['tournament'].astype(str)
-        + "_" + df['year'].astype(str)
+        df['date'].astype(str) 
         + "_" + df['home_team'].astype(str)
         + "_" + df['away_team'].astype(str)
     )
@@ -52,14 +51,20 @@ merged = draws.merge(shootouts, on='join_key', how='inner') # merges table we ju
 
 winners_after_1_1 = merged['winner'].unique() # creates a list of unique winners, removing duplicates
 
+print("\n4. Teams that won a shootout after a 1–1 draw:")
 print(winners_after_1_1)
 
 # 5. Top scorer of each tournament, and their % share of goals
 
-top_scorers_output = [] # 
+goals_with_tournament = goalscorers.merge(
+    results[['join_key', 'tournament']],
+    on='join_key',
+    how='left'
+)
+top_scorers_output = [] 
 
-for tournament in goalscorers['tournament'].unique(): # loop through each tournament
-    tdf = goalscorers[goalscorers['tournament'] == tournament] # keeps rows of goalscorers only for the current tournament
+for tournament in goals_with_tournament['tournament'].dropna().unique(): # loop through each tournament
+    tdf = goals_with_tournament[goals_with_tournament['tournament'] == tournament] # keeps rows of goalscorers only for the current tournament
     total_goals = len(tdf)
     scorer_counts = tdf['scorer'].value_counts() # counts each players nomb of goals 
     top_scorer = scorer_counts.idxmax() # returns name of highest value
