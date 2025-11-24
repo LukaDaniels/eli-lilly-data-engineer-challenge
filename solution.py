@@ -7,6 +7,11 @@ goalscorers = pd.read_csv("goalscorers.csv")
 results = pd.read_csv("results.csv")
 shootouts = pd.read_csv("shootouts.csv")
 
+# Create a year column because the CSV only has 'date'
+results['year'] = pd.to_datetime(results['date']).dt.year
+goalscorers['year'] = pd.to_datetime(goalscorers['date']).dt.year
+shootouts['year'] = pd.to_datetime(shootouts['date']).dt.year
+
 # 1. Average Goals per game between 1900-2000
 
 filtered = results[(results['year'] >= 1900) & (results['year'] <= 2000)] # classify timeframe
