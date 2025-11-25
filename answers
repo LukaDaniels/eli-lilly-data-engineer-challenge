@@ -27,6 +27,7 @@ Then I removed duplicates and removed rows flagged as containing issues.
 This produced a cleaner version of each dataset.
 
 
+
 # CODE
 
 import pandas as pd
@@ -71,7 +72,6 @@ results['join_key'] = create_key(results)
 goalscorers['join_key'] = create_key(goalscorers)
 shootouts['join_key'] = create_key(shootouts)
 # Use the function on each CSV
-
 
 
 # 4. Teams that won a shootout after 1-1 draw
