@@ -43,6 +43,8 @@ goalscorers['join_key'] = create_key(goalscorers)
 shootouts['join_key'] = create_key(shootouts)
 # Use the function on each CSV
 
+
+
 # 4. Teams that won a shootout after 1-1 draw
 
 draws = results[(results['home_score'] == 1) & (results['away_score'] == 1)] # filters matches that had 1-1 draw
@@ -77,8 +79,43 @@ for tournament in goals_with_tournament['tournament'].dropna().unique(): # loop 
         "goals": top_goals,
         "percentage_of_total": round(percentage, 2)
     })
-    #   Create table with desired values
+    #  Create table with desired values
 
 print("\n5. Top goal scorer by tournament:")
 for row in top_scorers_output:
     print(row)
+
+
+
+# Additional task - identify and correct data quality issues
+
+# Identifies and flags rows with missing values
+def flag_issues(df):
+    issues = (
+        df.isna().any(axis=1) |
+        (df['home_team'].astype(str).str.strip() == "") |
+        (df['away_team'].astype(str).str.strip() == "") |
+        (df['date'].astype(str).str.strip() == "")
+    )
+    return issues
+    
+# Add issues column too each dataset
+results['data_quality_issue'] = flag_issues(results)
+goalscorers['data_quality_issue'] = flag_issues(goalscorers)
+shootouts['data_quality_issue'] = flag_issues(shootouts)
+
+# Printing how many issues each dataset contained
+print("\nData quality issues flagged:")
+print("Results:", results['data_quality_issue'].sum())
+print("Goalscorers:", goalscorers['data_quality_issue'].sum())
+print("Shootouts:", shootouts['data_quality_issue'].sum())
+
+# Remove duplicate rows
+results_clean = results.drop_duplicates()
+goalscorers_clean = goalscorers.drop_duplicates()
+shootouts_clean = shootouts.drop_duplicates()
+
+# Remove rows with flagged issues
+results_clean = results_clean[~results_clean['data_quality_issue']]
+goalscorers_clean = goalscorers_clean[~goalscorers_clean['data_quality_issue']]
+shootouts_clean = shootouts_clean[~shootouts_clean['data_quality_issue']]
