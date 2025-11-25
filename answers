@@ -1,0 +1,150 @@
+1. Average goals per game (1900–2000)
+I loaded results.csv, aliogn with all of the CSV files
+I then extracted the year from the date column.
+Then I filtered results between 1900 and 2000 and calculated the average goals by adding home and away goals for each match.
+
+2. Shootout wins by country
+I used value_counts() on the winner column in shootouts.csv
+I sorted the index alphabetically, using sort_index().
+
+3. Reliable join key
+The only columns shared across all three datasets were date, home_team, and away_team.
+So I created a join_key by combining those three fields. 
+This allowed me to merge the data consistently.
+
+4. Winners after a 1–1 draw
+I filtered results.csv for matches ending 1–1.
+I then merged with the shootouts dataset using join_key.
+From that, I extracted the unique list of winners.
+
+5. Top goal scorer by tournament
+The goalscorers dataset doesn't contain tournament names, So I merged the tournament column from results using join_key.
+Then I grouped by tournament, counted goals per player, identified the top scorer and calculated their percentage of total goals.
+
+Additional tasks
+I added a data_quality_issue column to flag rows with missing values or blank team names.
+Then I removed duplicates and removed rows flagged as containing issues.
+This produced a cleaner version of each dataset.
+
+
+# CODE
+
+import pandas as pd
+
+# Load the data
+goalscorers = pd.read_csv("goalscorers.csv")
+results = pd.read_csv("results.csv")
+shootouts = pd.read_csv("shootouts.csv")
+
+# Create a year column because the CSV only has 'date'
+results['year'] = pd.to_datetime(results['date']).dt.year
+goalscorers['year'] = pd.to_datetime(goalscorers['date']).dt.year
+shootouts['year'] = pd.to_datetime(shootouts['date']).dt.year
+
+# 1. Average Goals per game between 1900-2000
+
+filtered = results[(results['year'] >= 1900) & (results['year'] <= 2000)] # classify timeframe
+filtered['total_goals'] = filtered['home_score'] + filtered['away_score'] # create new column and work out its mean
+average_goals = filtered['total_goals'].mean()
+
+print("1. Average goals per game (1900–2000):", round(average_goals, 2))  # print result to 2d.p.
+
+# 2. Number of shootout wins by country
+
+shootout_wins = shootouts['winner'].value_counts().sort_index() 
+# Count how many times each country appears as "winner" and sort them alphabetically
+
+print("\n2. Shootout wins by country (alphabetical):")
+print(shootout_wins)
+
+# 3. Create a reliable join key
+
+def create_key(df):
+    return (
+        df['date'].astype(str) 
+        + "_" + df['home_team'].astype(str)
+        + "_" + df['away_team'].astype(str)
+    )
+# Creates a unique ID for each match, as each CSV file contains these columns
+
+results['join_key'] = create_key(results)
+goalscorers['join_key'] = create_key(goalscorers)
+shootouts['join_key'] = create_key(shootouts)
+# Use the function on each CSV
+
+
+
+# 4. Teams that won a shootout after 1-1 draw
+
+draws = results[(results['home_score'] == 1) & (results['away_score'] == 1)] # filters matches that had 1-1 draw
+
+merged = draws.merge(shootouts, on='join_key', how='inner') # merges table we just created with shootout table
+
+winners_after_1_1 = merged['winner'].unique() # creates a list of unique winners, removing duplicates
+
+print("\n4. Teams that won a shootout after a 1–1 draw:")
+print(winners_after_1_1)
+
+# 5. Top scorer of each tournament, and their % share of goals
+
+goals_with_tournament = goalscorers.merge(
+    results[['join_key', 'tournament']],
+    on='join_key',
+    how='left'
+)
+top_scorers_output = [] 
+
+for tournament in goals_with_tournament['tournament'].dropna().unique(): # loop through each tournament
+    tdf = goals_with_tournament[goals_with_tournament['tournament'] == tournament] # keeps rows of goalscorers only for the current tournament
+    total_goals = len(tdf)
+    scorer_counts = tdf['scorer'].value_counts() # counts each players nomb of goals 
+    top_scorer = scorer_counts.idxmax() # returns name of highest value
+    top_goals = scorer_counts.max() 
+    percentage = (top_goals / total_goals) * 100 # returns percantage of total goals
+
+    top_scorers_output.append({
+        "tournament": tournament,
+        "top_scorer": top_scorer,
+        "goals": top_goals,
+        "percentage_of_total": round(percentage, 2)
+    })
+    #  Create table with desired values
+
+print("\n5. Top goal scorer by tournament:")
+for row in top_scorers_output:
+    print(row)
+
+
+
+# Additional task - identify and correct data quality issues
+
+# Identifies and flags rows with missing values
+def flag_issues(df):
+    issues = (
+        df.isna().any(axis=1) |
+        (df['home_team'].astype(str).str.strip() == "") |
+        (df['away_team'].astype(str).str.strip() == "") |
+        (df['date'].astype(str).str.strip() == "")
+    )
+    return issues
+    
+# Add issues column too each dataset
+results['data_quality_issue'] = flag_issues(results)
+goalscorers['data_quality_issue'] = flag_issues(goalscorers)
+shootouts['data_quality_issue'] = flag_issues(shootouts)
+
+# Printing how many issues each dataset contained
+print("\nData quality issues flagged:")
+print("Results:", results['data_quality_issue'].sum())
+print("Goalscorers:", goalscorers['data_quality_issue'].sum())
+print("Shootouts:", shootouts['data_quality_issue'].sum())
+
+# Remove duplicate rows
+results_clean = results.drop_duplicates()
+goalscorers_clean = goalscorers.drop_duplicates()
+shootouts_clean = shootouts.drop_duplicates()
+
+# Remove rows with flagged issues
+results_clean = results_clean[~results_clean['data_quality_issue']]
+goalscorers_clean = goalscorers_clean[~goalscorers_clean['data_quality_issue']]
+shootouts_clean = shootouts_clean[~shootouts_clean['data_quality_issue']]
