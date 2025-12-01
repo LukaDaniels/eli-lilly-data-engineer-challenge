@@ -12,6 +12,40 @@ results['year'] = pd.to_datetime(results['date']).dt.year
 goalscorers['year'] = pd.to_datetime(goalscorers['date']).dt.year
 shootouts['year'] = pd.to_datetime(shootouts['date']).dt.year
 
+# Additional task - identify and correct data quality issues
+
+# Identifies and flags rows with missing values
+def flag_issues(df):
+    issues = (
+        df.isna().any(axis=1) |
+        (df['home_team'].astype(str).str.strip() == "") |
+        (df['away_team'].astype(str).str.strip() == "") |
+        (df['date'].astype(str).str.strip() == "")
+    )
+    return issues
+    
+# Add issues column too each dataset
+results['data_quality_issue'] = flag_issues(results)
+goalscorers['data_quality_issue'] = flag_issues(goalscorers)
+shootouts['data_quality_issue'] = flag_issues(shootouts)
+
+# Printing how many issues each dataset contained
+print("\nData quality issues flagged:")
+print("Results:", results['data_quality_issue'].sum())
+print("Goalscorers:", goalscorers['data_quality_issue'].sum())
+print("Shootouts:", shootouts['data_quality_issue'].sum())
+
+# Remove duplicate rows
+results_clean = results.drop_duplicates()
+goalscorers_clean = goalscorers.drop_duplicates()
+shootouts_clean = shootouts.drop_duplicates()
+
+# Remove rows with flagged issues
+results_clean = results_clean[~results_clean['data_quality_issue']]
+goalscorers_clean = goalscorers_clean[~goalscorers_clean['data_quality_issue']]
+shootouts_clean = shootouts_clean[~shootouts_clean['data_quality_issue']]
+
+
 # 1. Average Goals per game between 1900-2000
 
 filtered = results[(results['year'] >= 1900) & (results['year'] <= 2000)] # classify timeframe
@@ -85,37 +119,3 @@ print("\n5. Top goal scorer by tournament:")
 for row in top_scorers_output:
     print(row)
 
-
-
-# Additional task - identify and correct data quality issues
-
-# Identifies and flags rows with missing values
-def flag_issues(df):
-    issues = (
-        df.isna().any(axis=1) |
-        (df['home_team'].astype(str).str.strip() == "") |
-        (df['away_team'].astype(str).str.strip() == "") |
-        (df['date'].astype(str).str.strip() == "")
-    )
-    return issues
-    
-# Add issues column too each dataset
-results['data_quality_issue'] = flag_issues(results)
-goalscorers['data_quality_issue'] = flag_issues(goalscorers)
-shootouts['data_quality_issue'] = flag_issues(shootouts)
-
-# Printing how many issues each dataset contained
-print("\nData quality issues flagged:")
-print("Results:", results['data_quality_issue'].sum())
-print("Goalscorers:", goalscorers['data_quality_issue'].sum())
-print("Shootouts:", shootouts['data_quality_issue'].sum())
-
-# Remove duplicate rows
-results_clean = results.drop_duplicates()
-goalscorers_clean = goalscorers.drop_duplicates()
-shootouts_clean = shootouts.drop_duplicates()
-
-# Remove rows with flagged issues
-results_clean = results_clean[~results_clean['data_quality_issue']]
-goalscorers_clean = goalscorers_clean[~goalscorers_clean['data_quality_issue']]
-shootouts_clean = shootouts_clean[~shootouts_clean['data_quality_issue']]
