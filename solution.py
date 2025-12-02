@@ -93,7 +93,7 @@ print(winners_after_1_1)
 # 5. Top scorer of each tournament, and their % share of goals
 
 goals_with_tournament = goalscorers_clean.merge(
-    results[['join_key', 'tournament']],
+    results_clean[['join_key', 'tournament']],
     on='join_key',
     how='left'
 )
